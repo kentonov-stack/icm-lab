@@ -37,3 +37,19 @@ export function equity(s,p,iterations=16384){let alive=s.filter(x=>x>0).length;i
 export function duel(s,p,index=1){let e=Math.min(s[0],s[index]),win=[...s],lose=[...s];win[0]+=e;win[index]-=e;lose[0]-=e;lose[index]+=e;let base=equity(s,p),up=equity(win,p),down=equity(lose,p),gain=up.value-base.value,loss=base.value-down.value;let bf=gain>0?loss/gain:Infinity,q=loss/(loss+gain);return {bf,q,rp:q-.5,base,win:up.value,lose:down.value,e};}
 export const positions={9:['UTG','UTG+1','UTG+2','LJ','HJ','CO','BTN','SB'],6:['LJ','HJ','CO','BTN','SB']};
 export function range({table=9,pos='BTN',bb=25,ante=1,rp=0,spread=.8,ratio=1}){let baselines={UTG:.14,'UTG+1':.16,'UTG+2':.18,LJ:.21,HJ:.25,CO:.32,BTN:.47,SB:.52};let target=Math.max(.04,Math.min(.7,baselines[pos]+ante*.025-Math.max(0,rp)*.65+(Math.min(bb,60)-30)*.0006+Math.log2(Math.max(.1,ratio))*.012-spread*.008));let ranks='AKQJT98765432',hands=[];for(let r=0;r<13;r++)for(let c=0;c<13;c++){let high=14-Math.min(r,c),low=14-Math.max(r,c),pair=r===c,suited=r<c;let score=pair?high*4+26:high*2.1+low*.85+(suited?5:0)-Math.max(0,high-low-1)*1.4+(high===14?3:0);hands.push({r,c,label:pair?ranks[r]+ranks[c]:ranks[Math.min(r,c)]+ranks[Math.max(r,c)]+(suited?'s':'o'),score,combos:pair?6:suited?4:12});}let sorted=[...hands].sort((a,b)=>b.score-a.score),count=0;for(let h of sorted){h.action=count<1326*target?(bb<=12?'push':'open'):'fold';if(h.action!=='fold')count+=h.combos;}return {hands,count,pct:count/1326,size:bb<=12?'ALL-IN':pos==='SB'?'2.5 BB':bb<25?'2.0 BB':'2.2 BB'};}
+
+// Gain a fixed amount by proportionally transferring chips from all opponents.
+export function chipGain(s,p,amount,base=equity(s,p).value){
+ const other=s.slice(1).reduce((a,b)=>a+b,0);
+ if(!Number.isFinite(amount)||amount<=0||amount>other||other<=0)return null;
+ const after=[s[0]+amount,...s.slice(1).map(x=>x*(other-amount)/other)];
+ return equity(after,p).value-base;
+}
+
+// Lose chips by proportionally distributing them to the surviving opponents.
+export function chipLoss(s,p,amount,base=equity(s,p).value){
+ const other=s.slice(1).reduce((a,b)=>a+b,0);
+ if(!Number.isFinite(amount)||amount<=0||amount>s[0]||other<=0)return null;
+ const after=[s[0]-amount,...s.slice(1).map(x=>x*(other+amount)/other)];
+ return base-equity(after,p).value;
+}
