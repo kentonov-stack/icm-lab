@@ -22,7 +22,7 @@ export function initMotion(){
  const replay=document.createElement('button');replay.type='button';replay.id='motionReplay';replay.className='outline motion-replay';
  const state=()=>{replay.disabled=preference.matches;replay.textContent=preference.matches?'端末設定により動きはOFF':'登場の動きを再生';};state();
  replay.addEventListener('click',()=>{document.querySelectorAll('.setup-card').forEach((card,index)=>revealCard(card,index*110));});
- document.querySelector('.input-heading').append(replay);
+ document.querySelector('.input-heading')?.append(replay);
  preference.addEventListener('change',state);
  if(!('IntersectionObserver' in window))return;
  const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(!entry.isIntersecting)continue;observer.unobserve(entry.target);if(preference.matches)continue;let cards=[...document.querySelectorAll('.setup-card')],index=cards.indexOf(entry.target);revealCard(entry.target,index>=0?index*110:0);if(entry.target.classList.contains('bb-impact'))revealBars();}},{threshold:.15});
